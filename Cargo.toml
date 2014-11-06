@@ -1,0 +1,10 @@
+[package]
+name = "rust-basehangul"
+version = "0.0.1"
+authors = ["Kang Seonghoon <public+rust@mearie.org>"]
+
+[lib]
+name = "basehangul"
+
+[dependencies.encoding-index-korean]
+git = "https://github.com/lifthrasiir/rust-encoding.git"
