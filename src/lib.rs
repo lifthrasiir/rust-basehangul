@@ -402,7 +402,7 @@ impl<Iter: Iterator<char>> Iterator<DecodeResult<u8>> for Decoder<Iter> {
 
 /// Converts a BaseHangul string into the byte sequence if possible.
 pub fn decode(input: &str) -> DecodeResult<Vec<u8>> {
-    Decoder::new(input.chars()).collect()
+    Decoder::new(input.chars().filter(|c| !c.is_whitespace())).collect()
 }
 
 #[cfg(test)]
@@ -413,5 +413,14 @@ fn test_decode() {
     assert_eq!(decode("꺽먹꼐톈"), Ok(vec![49, 50, 51, 100]));
     assert_eq!(decode("쟌"), Ok(vec![49]));
     assert_eq!(decode(""), Ok(vec![]));
+
+    // ignores whitespace
+    assert_eq!(decode("   쟌    "), Ok(vec![49]));
+    assert_eq!(decode("\t가\n가\u3000가가"), Ok(vec![0, 0, 0, 0, 0]));
+
+    // error: invalid
+    assert!(decode("X").is_err());
+    assert!(decode("뷁").is_err()); // not in KS X 1001
+    assert!(decode("힝").is_err()); // out of bounds
 }
 
