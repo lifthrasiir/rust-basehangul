@@ -164,30 +164,30 @@ fn pack(input: &[u8]) -> Vec<u16> {
 #[cfg(test)]
 #[test]
 fn test_pack() {
-    assert_eq!(pack([]), vec![]);
-    assert_eq!(pack([0b_____00000000]),
-               vec! [0b1_10_00000000]);
-    assert_eq!(pack([0b_____11111111]),
-               vec! [0b1_10_11111111]);
-    assert_eq!(pack([0b00000000, 0b11___________111111]),
-               vec! [0b00000000____11, 0b1_1110_111111]);
-    assert_eq!(pack([0b11111111, 0b00___________000000]),
-               vec! [0b11111111____00, 0b1_1110_000000]);
-    assert_eq!(pack([0b00000000, 0b11____111111, 0b0000_____________0000]),
-               vec! [0b00000000____11, 0b111111____0000, 0b1_111110_0000]);
-    assert_eq!(pack([0b11111111, 0b00____000000, 0b1111_____________1111]),
-               vec! [0b11111111____00, 0b000000____1111, 0b1_111110_1111]);
-    assert_eq!(pack([0b00000000, 0b11____111111, 0b0000____0000, 0b111111_______________11]),
-               vec! [0b00000000____11, 0b111111____0000, 0b0000____111111, 0b1_11111110_11]);
-    assert_eq!(pack([0b11111111, 0b00____000000, 0b1111____1111, 0b000000_______________00]),
-               vec! [0b11111111____00, 0b000000____1111, 0b1111____000000, 0b1_11111110_00]);
-    assert_eq!(pack([0b00000000, 0b11____111111, 0b0000____0000, 0b111111____11, 0b00000000]),
-               vec! [0b00000000____11, 0b111111____0000, 0b0000____111111, 0b11____00000000]);
+    assert_eq!(pack(&[]), vec![]);
+    assert_eq!(pack(&[0b_____00000000]),
+               vec!  [0b1_10_00000000]);
+    assert_eq!(pack(&[0b_____11111111]),
+               vec!  [0b1_10_11111111]);
+    assert_eq!(pack(&[0b00000000, 0b11___________111111]),
+               vec!  [0b00000000____11, 0b1_1110_111111]);
+    assert_eq!(pack(&[0b11111111, 0b00___________000000]),
+               vec!  [0b11111111____00, 0b1_1110_000000]);
+    assert_eq!(pack(&[0b00000000, 0b11____111111, 0b0000_____________0000]),
+               vec!  [0b00000000____11, 0b111111____0000, 0b1_111110_0000]);
+    assert_eq!(pack(&[0b11111111, 0b00____000000, 0b1111_____________1111]),
+               vec!  [0b11111111____00, 0b000000____1111, 0b1_111110_1111]);
+    assert_eq!(pack(&[0b00000000, 0b11____111111, 0b0000____0000, 0b111111_______________11]),
+               vec!  [0b00000000____11, 0b111111____0000, 0b0000____111111, 0b1_11111110_11]);
+    assert_eq!(pack(&[0b11111111, 0b00____000000, 0b1111____1111, 0b000000_______________00]),
+               vec!  [0b11111111____00, 0b000000____1111, 0b1111____000000, 0b1_11111110_00]);
+    assert_eq!(pack(&[0b00000000, 0b11____111111, 0b0000____0000, 0b111111____11, 0b00000000]),
+               vec!  [0b00000000____11, 0b111111____0000, 0b0000____111111, 0b11____00000000]);
 
-    // spec examples
-    assert_eq!(pack([49, 50, 51, 97, 98]), vec![196, 803, 216, 354]);
-    assert_eq!(pack([49, 50, 51, 100]), vec![196, 803, 217, 2040]);
-    assert_eq!(pack([49]), vec![1585]);
+    // spec examples&
+    assert_eq!(pack(&[49, 50, 51, 97, 98]), vec![196, 803, 216, 354]);
+    assert_eq!(pack(&[49, 50, 51, 100]), vec![196, 803, 217, 2040]);
+    assert_eq!(pack(&[49]), vec![1585]);
 }
 
 /// An iterator adapter that encodes the byte stream into the BaseHangul stream.
@@ -216,10 +216,10 @@ pub fn encode(input: &[u8]) -> String {
 #[test]
 fn test_encode() {
     // spec examples
-    assert_eq!(encode([49, 50, 51, 97, 98]), "꺽먹꼍녜".to_string());
-    assert_eq!(encode([49, 50, 51, 100]), "꺽먹꼐톈".to_string());
-    assert_eq!(encode([49]), "쟌".to_string());
-    assert_eq!(encode([]), "".to_string());
+    assert_eq!(encode(&[49, 50, 51, 97, 98]), "꺽먹꼍녜".to_string());
+    assert_eq!(encode(&[49, 50, 51, 100]), "꺽먹꼐톈".to_string());
+    assert_eq!(encode(&[49]), "쟌".to_string());
+    assert_eq!(encode(&[]), "".to_string());
 }
 
 // --------------------&<--------------------
@@ -306,73 +306,73 @@ fn unpack(input: &[u16]) -> DecodeResult<Vec<u8>> {
 #[cfg(test)]
 #[test]
 fn test_unpack() {
-    assert_eq!(unpack([]), Ok(vec![]));
-    assert_eq!(unpack([0b1_10_00000000]),
-               Ok(vec![0b_____00000000]));
-    assert_eq!(unpack([0b1_10_11111111]),
-               Ok(vec![0b_____11111111]));
-    assert_eq!(unpack([0b00000000____11, 0b1_1110_111111]),
-               Ok(vec![0b00000000, 0b11___________111111]));
-    assert_eq!(unpack([0b11111111____00, 0b1_1110_000000]),
-               Ok(vec![0b11111111, 0b00___________000000]));
-    assert_eq!(unpack([0b00000000____11, 0b111111____0000, 0b1_111110_0000]),
-               Ok(vec![0b00000000, 0b11____111111, 0b0000_____________0000]));
-    assert_eq!(unpack([0b11111111____00, 0b000000____1111, 0b1_111110_1111]),
-               Ok(vec![0b11111111, 0b00____000000, 0b1111_____________1111]));
-    assert_eq!(unpack([0b00000000____11, 0b111111____0000, 0b0000____111111, 0b1_11111110_11]),
-               Ok(vec![0b00000000, 0b11____111111, 0b0000____0000, 0b111111_______________11]));
-    assert_eq!(unpack([0b11111111____00, 0b000000____1111, 0b1111____000000, 0b1_11111110_00]),
-               Ok(vec![0b11111111, 0b00____000000, 0b1111____1111, 0b000000_______________00]));
-    assert_eq!(unpack([0b00000000____11, 0b111111____0000, 0b0000____111111, 0b11____00000000]),
-               Ok(vec![0b00000000, 0b11____111111, 0b0000____0000, 0b111111____11, 0b00000000]));
+    assert_eq!(unpack(&[]), Ok(vec![]));
+    assert_eq!(unpack(&[0b1_10_00000000]),
+               Ok(vec! [0b_____00000000]));
+    assert_eq!(unpack(&[0b1_10_11111111]),
+               Ok(vec! [0b_____11111111]));
+    assert_eq!(unpack(&[0b00000000____11, 0b1_1110_111111]),
+               Ok(vec! [0b00000000, 0b11___________111111]));
+    assert_eq!(unpack(&[0b11111111____00, 0b1_1110_000000]),
+               Ok(vec! [0b11111111, 0b00___________000000]));
+    assert_eq!(unpack(&[0b00000000____11, 0b111111____0000, 0b1_111110_0000]),
+               Ok(vec! [0b00000000, 0b11____111111, 0b0000_____________0000]));
+    assert_eq!(unpack(&[0b11111111____00, 0b000000____1111, 0b1_111110_1111]),
+               Ok(vec! [0b11111111, 0b00____000000, 0b1111_____________1111]));
+    assert_eq!(unpack(&[0b00000000____11, 0b111111____0000, 0b0000____111111, 0b1_11111110_11]),
+               Ok(vec! [0b00000000, 0b11____111111, 0b0000____0000, 0b111111_______________11]));
+    assert_eq!(unpack(&[0b11111111____00, 0b000000____1111, 0b1111____000000, 0b1_11111110_00]),
+               Ok(vec! [0b11111111, 0b00____000000, 0b1111____1111, 0b000000_______________00]));
+    assert_eq!(unpack(&[0b00000000____11, 0b111111____0000, 0b0000____111111, 0b11____00000000]),
+               Ok(vec! [0b00000000, 0b11____111111, 0b0000____0000, 0b111111____11, 0b00000000]));
 
     // spec examples
-    assert_eq!(unpack([196, 803, 216, 354]), Ok(vec![49, 50, 51, 97, 98]));
-    assert_eq!(unpack([196, 803, 217, 2040]), Ok(vec![49, 50, 51, 100]));
-    assert_eq!(unpack([1585]), Ok(vec![49]));
+    assert_eq!(unpack(&[196, 803, 216, 354]), Ok(vec![49, 50, 51, 97, 98]));
+    assert_eq!(unpack(&[196, 803, 217, 2040]), Ok(vec![49, 50, 51, 100]));
+    assert_eq!(unpack(&[1585]), Ok(vec![49]));
 
     // error: non-integral number of bits
-    assert!(unpack([0b1_111111110_0]).is_err());
-    assert!(unpack([0b1_11111110_00]).is_err());
-    assert!(unpack([0b1_1111110_000]).is_err());
-    assert!(unpack([0b1_111110_0000]).is_err());
-    assert!(unpack([0b1_11110_00000]).is_err());
-    assert!(unpack([0b1_1110_000000]).is_err());
-    assert!(unpack([0b1_110_0000000]).is_err());
-    assert!(unpack([0b1_0_000000000]).is_err());
-    assert!(unpack([1]).is_err());
-    assert!(unpack([1, 0b1_111111110_0]).is_err());
-    assert!(unpack([1, 0b1_11111110_00]).is_err());
-    assert!(unpack([1, 0b1_1111110_000]).is_err());
-    assert!(unpack([1, 0b1_111110_0000]).is_err());
-    assert!(unpack([1, 0b1_11110_00000]).is_err());
-    assert!(unpack([1, 0b1_110_0000000]).is_err());
-    assert!(unpack([1, 0b1_10_00000000]).is_err());
-    assert!(unpack([1, 0b1_0_000000000]).is_err());
-    assert!(unpack([1, 2]).is_err());
-    assert!(unpack([1, 2, 0b1_111111110_0]).is_err());
-    assert!(unpack([1, 2, 0b1_11111110_00]).is_err());
-    assert!(unpack([1, 2, 0b1_1111110_000]).is_err());
-    assert!(unpack([1, 2, 0b1_11110_00000]).is_err());
-    assert!(unpack([1, 2, 0b1_1110_000000]).is_err());
-    assert!(unpack([1, 2, 0b1_110_0000000]).is_err());
-    assert!(unpack([1, 2, 0b1_10_00000000]).is_err());
-    assert!(unpack([1, 2, 0b1_0_000000000]).is_err());
-    assert!(unpack([1, 2, 3]).is_err());
-    assert!(unpack([1, 2, 3, 0b1_111111110_0]).is_err());
-    assert!(unpack([1, 2, 3, 0b1_1111110_000]).is_err());
-    assert!(unpack([1, 2, 3, 0b1_111110_0000]).is_err());
-    assert!(unpack([1, 2, 3, 0b1_11110_00000]).is_err());
-    assert!(unpack([1, 2, 3, 0b1_1110_000000]).is_err());
-    assert!(unpack([1, 2, 3, 0b1_110_0000000]).is_err());
-    assert!(unpack([1, 2, 3, 0b1_10_00000000]).is_err());
-    assert!(unpack([1, 2, 3, 0b1_0_000000000]).is_err());
+    assert!(unpack(&[0b1_111111110_0]).is_err());
+    assert!(unpack(&[0b1_11111110_00]).is_err());
+    assert!(unpack(&[0b1_1111110_000]).is_err());
+    assert!(unpack(&[0b1_111110_0000]).is_err());
+    assert!(unpack(&[0b1_11110_00000]).is_err());
+    assert!(unpack(&[0b1_1110_000000]).is_err());
+    assert!(unpack(&[0b1_110_0000000]).is_err());
+    assert!(unpack(&[0b1_0_000000000]).is_err());
+    assert!(unpack(&[1]).is_err());
+    assert!(unpack(&[1, 0b1_111111110_0]).is_err());
+    assert!(unpack(&[1, 0b1_11111110_00]).is_err());
+    assert!(unpack(&[1, 0b1_1111110_000]).is_err());
+    assert!(unpack(&[1, 0b1_111110_0000]).is_err());
+    assert!(unpack(&[1, 0b1_11110_00000]).is_err());
+    assert!(unpack(&[1, 0b1_110_0000000]).is_err());
+    assert!(unpack(&[1, 0b1_10_00000000]).is_err());
+    assert!(unpack(&[1, 0b1_0_000000000]).is_err());
+    assert!(unpack(&[1, 2]).is_err());
+    assert!(unpack(&[1, 2, 0b1_111111110_0]).is_err());
+    assert!(unpack(&[1, 2, 0b1_11111110_00]).is_err());
+    assert!(unpack(&[1, 2, 0b1_1111110_000]).is_err());
+    assert!(unpack(&[1, 2, 0b1_11110_00000]).is_err());
+    assert!(unpack(&[1, 2, 0b1_1110_000000]).is_err());
+    assert!(unpack(&[1, 2, 0b1_110_0000000]).is_err());
+    assert!(unpack(&[1, 2, 0b1_10_00000000]).is_err());
+    assert!(unpack(&[1, 2, 0b1_0_000000000]).is_err());
+    assert!(unpack(&[1, 2, 3]).is_err());
+    assert!(unpack(&[1, 2, 3, 0b1_111111110_0]).is_err());
+    assert!(unpack(&[1, 2, 3, 0b1_1111110_000]).is_err());
+    assert!(unpack(&[1, 2, 3, 0b1_111110_0000]).is_err());
+    assert!(unpack(&[1, 2, 3, 0b1_11110_00000]).is_err());
+    assert!(unpack(&[1, 2, 3, 0b1_1110_000000]).is_err());
+    assert!(unpack(&[1, 2, 3, 0b1_110_0000000]).is_err());
+    assert!(unpack(&[1, 2, 3, 0b1_10_00000000]).is_err());
+    assert!(unpack(&[1, 2, 3, 0b1_0_000000000]).is_err());
 
     // error: invalid code word
-    assert!(unpack([0b1_1111111110]).is_err());
-    assert!(unpack([0b1_1111111111]).is_err());
-    assert!(unpack([2048]).is_err());
-    assert!(unpack([2349]).is_err());
+    assert!(unpack(&[0b1_1111111110]).is_err());
+    assert!(unpack(&[0b1_1111111111]).is_err());
+    assert!(unpack(&[2048]).is_err());
+    assert!(unpack(&[2349]).is_err());
 }
 
 /// An iterator adapter that decodes the byte stream from the BaseHangul stream.
