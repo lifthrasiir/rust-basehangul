@@ -1,10 +1,11 @@
 [package]
 name = "basehangul"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Kang Seonghoon <public+rust@mearie.org>"]
 
 description = "An implementation of BaseHangul binary-to-text format in Rust"
 homepage = "https://github.com/lifthrasiir/rust-basehangul"
+documentation = "https://lifthrasiir.github.io/rust-basehangul/basehangul"
 repository = "https://github.com/lifthrasiir/rust-basehangul"
 keywords = ["encoding"]
 readme = "README.md"

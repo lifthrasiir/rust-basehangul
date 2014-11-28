@@ -254,7 +254,7 @@ impl<Iter: Iterator<u16>> Iterator<DecodeResult<u8>> for Unpacker<Iter> {
             if self.last {
                 if self.nbits > 0 {
                     self.nbits = 0;
-                    return Some(Err("non-integral number of bytes".into_maybe_owned()));
+                    return Some(Err("non-integral number of bytes".into_cow()));
                 } else {
                     return None;
                 }
@@ -282,7 +282,7 @@ impl<Iter: Iterator<u16>> Iterator<DecodeResult<u8>> for Unpacker<Iter> {
                 Some(_) => {
                     self.last = true;
                     self.nbits = 0;
-                    return Some(Err("invalid code word".into_maybe_owned()));
+                    return Some(Err("invalid code word".into_cow()));
                 }
                 None => {
                     self.last = true;
