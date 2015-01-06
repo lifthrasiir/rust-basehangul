@@ -6,61 +6,43 @@
 
 //! An implementation of [BaseHangul](https://BaseHangul.github.io) in Rust.
 
-#![feature(if_let)]
+#![feature(associated_types)]
 
 extern crate "encoding-index-korean" as encoding_index;
 
 use std::{char, iter};
-use std::str::SendStr;
+use std::borrow::IntoCow;
+use std::string::CowString;
 
 /// The enum that contains either `T` or a decoding error.
-pub type DecodeResult<T> = Result<T, SendStr>;
+pub type DecodeResult<T> = Result<T, CowString<'static>>;
 
 // --------------------&<--------------------
 // code to index and vice versa
 
 const NCHARS: u16 = 2350;
-const UHC_NCOLS: u16 = 26 + 26 + (0xa1 - 0x81);
-const UHC_NROWS: u16 = 0xc7 - 0x81;
-const KSX_NCOLS: u16 = 94;
-const NCOLS: u16 = 26 + 26 + 126;
-const BASE_ROW: u16 = 0xb0 - 0x81;
+const NCOLS: u16 = 94;
+const STRIDE: u16 = 190;
+const LEAD_OFFSET: u16 = 0xb0 - 0x81;
+const TRAIL_OFFSET: u16 = 0xa1 - 0x41;
 
 fn index_to_char(i: u16) -> char {
     debug_assert!(i < NCHARS);
-    let row = i / KSX_NCOLS + BASE_ROW;
-    let col = i % KSX_NCOLS;
-    let code = if row < UHC_NROWS {
-        NCOLS * row + (UHC_NCOLS + col)
-    } else {
-        NCOLS * UHC_NROWS + (row - UHC_NROWS) * KSX_NCOLS + col
-    };
+    let row = i / NCOLS + LEAD_OFFSET;
+    let col = i % NCOLS + TRAIL_OFFSET;
+    let code = row * STRIDE + col;
     char::from_u32(encoding_index::euc_kr::forward(code) as u32).unwrap()
 }
 
 fn char_to_index(c: char) -> Option<u16> {
     let code = encoding_index::euc_kr::backward(c as u32);
-    if code < NCOLS * UHC_NROWS {
-        let row = code / NCOLS;
-        let col = code % NCOLS;
-        if row >= BASE_ROW && col >= UHC_NCOLS {
-            let index = (row - BASE_ROW) * KSX_NCOLS + (col - UHC_NCOLS);
-            debug_assert!(index < NCHARS);
-            Some(index)
-        } else {
-            None
-        }
-    } else {
-        let code = code - NCOLS * UHC_NROWS;
-        let row = code / KSX_NCOLS + UHC_NROWS;
-        let col = code % KSX_NCOLS;
-        let index = (row - BASE_ROW) * KSX_NCOLS + col;
-        if index < NCHARS {
-            Some(index)
-        } else {
-            None
-        }
+    let row = code / STRIDE;
+    let col = code % STRIDE;
+    if row >= LEAD_OFFSET && col >= TRAIL_OFFSET {
+        let index = (row - LEAD_OFFSET) * NCOLS + (col - TRAIL_OFFSET);
+        if index < NCHARS { return Some(index); }
     }
+    None
 }
 
 #[cfg(test)]
@@ -75,7 +57,7 @@ fn test_index_to_char() {
 #[cfg(test)]
 #[test]
 fn test_char_to_index() {
-    assert_eq!(char_to_index('\x00'), None);
+    assert_eq!(char_to_index('\0'), None);
     assert_eq!(char_to_index('a'), None);
     assert_eq!(char_to_index('가'), Some(0));
     assert_eq!(char_to_index('각'), Some(1));
@@ -84,8 +66,8 @@ fn test_char_to_index() {
     assert_eq!(char_to_index('간'), Some(2));
     assert_eq!(char_to_index('힝'), Some(2349));
     assert_eq!(char_to_index('힣'), None);
-    assert_eq!(char_to_index('\uffff'), None);
-    assert_eq!(char_to_index('\U0010ffff'), None);
+    assert_eq!(char_to_index('\u{ffff}'), None);
+    assert_eq!(char_to_index('\u{10ffff}'), None);
 }
 
 #[cfg(test)]
@@ -113,14 +95,16 @@ pub struct Packer<Iter> {
     nbits: uint,
 }
 
-impl<Iter: Iterator<u8>> Packer<Iter> {
+impl<Iter: Iterator<Item=u8>> Packer<Iter> {
     /// Creates a packing adapter.
     pub fn new(iter: Iter) -> Packer<Iter> {
         Packer { iter: iter.fuse(), bits: 0, nbits: 0 }
     }
 }
 
-impl<Iter: Iterator<u8>> Iterator<u16> for Packer<Iter> {
+impl<Iter: Iterator<Item=u8>> Iterator for Packer<Iter> {
+    type Item = u16;
+
     fn next(&mut self) -> Option<u16> {
         loop {
             debug_assert!(self.nbits < 10);
@@ -195,14 +179,15 @@ pub struct Encoder<Iter> {
     packer: Packer<Iter>,
 }
 
-impl<Iter: Iterator<u8>> Encoder<Iter> {
+impl<Iter: Iterator<Item=u8>> Encoder<Iter> {
     /// Creates an encoding adapter.
     pub fn new(iter: Iter) -> Encoder<Iter> {
         Encoder { packer: Packer::new(iter) }
     }
 }
 
-impl<Iter: Iterator<u8>> Iterator<char> for Encoder<Iter> {
+impl<Iter: Iterator<Item=u8>> Iterator for Encoder<Iter> {
+    type Item = char;
     fn next(&mut self) -> Option<char> { self.packer.next().map(index_to_char) }
     fn size_hint(&self) -> (uint, Option<uint>) { self.packer.size_hint() }
 }
@@ -233,14 +218,16 @@ pub struct Unpacker<Iter> {
     last: bool,
 }
 
-impl<Iter: Iterator<u16>> Unpacker<Iter> {
+impl<Iter: Iterator<Item=u16>> Unpacker<Iter> {
     /// Creates an unpacking adapter.
     pub fn new(iter: Iter) -> Unpacker<Iter> {
         Unpacker { iter: iter, bits: 0, nbits: 0, last: false }
     }
 }
 
-impl<Iter: Iterator<u16>> Iterator<DecodeResult<u8>> for Unpacker<Iter> {
+impl<Iter: Iterator<Item=u16>> Iterator for Unpacker<Iter> {
+    type Item = DecodeResult<u8>;
+
     fn next(&mut self) -> Option<DecodeResult<u8>> {
         loop {
             // emit the buffered byte
@@ -266,8 +253,8 @@ impl<Iter: Iterator<u16>> Iterator<DecodeResult<u8>> for Unpacker<Iter> {
                     self.nbits += 10;
                 }
                 Some(b @ 1024...2045) => {
-                    static CL1: [u8, ..32] = [0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
-                                              1,1,1,1,1,1,1,1, 2,2,2,2,3,3,4,5];
+                    static CL1: [u8; 32] = [0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
+                                            1,1,1,1,1,1,1,1, 2,2,2,2,3,3,4,5];
                     let mut nones = CL1[((b >> 5) & 0x1f) as uint] as uint;
                     if nones == 5 { // we may have more ones in the lower half
                         nones += CL1[(b & 0x1f) as uint] as uint;
@@ -376,21 +363,23 @@ fn test_unpack() {
 }
 
 /// An iterator adapter that decodes the byte stream from the BaseHangul stream.
-pub struct Decoder<Iter> {
-    unpacker: Unpacker<iter::Map<'static, char, u16, Iter>>,
+pub struct Decoder<Iter: Iterator<Item=char>> {
+    unpacker: Unpacker<iter::Map<char, u16, Iter, fn(char) -> u16>>,
 }
 
-impl<Iter: Iterator<char>> Decoder<Iter> {
+impl<Iter: Iterator<Item=char>> Decoder<Iter> {
     /// Creates a decoding adapter.
     pub fn new(iter: Iter) -> Decoder<Iter> {
         fn char_to_index_or_so(c: char) -> u16 {
             char_to_index(c).unwrap_or(NCHARS /*out-of-bounds*/)
         }
+        let char_to_index_or_so = char_to_index_or_so as fn(char) -> u16;
         Decoder { unpacker: Unpacker::new(iter.map(char_to_index_or_so)) }
     }
 }
 
-impl<Iter: Iterator<char>> Iterator<DecodeResult<u8>> for Decoder<Iter> {
+impl<Iter: Iterator<Item=char>> Iterator for Decoder<Iter> {
+    type Item = DecodeResult<u8>;
     fn next(&mut self) -> Option<DecodeResult<u8>> {
         self.unpacker.next()
     }
@@ -416,7 +405,7 @@ fn test_decode() {
 
     // ignores whitespace
     assert_eq!(decode("   쟌    "), Ok(vec![49]));
-    assert_eq!(decode("\t가\n가\u3000가가"), Ok(vec![0, 0, 0, 0, 0]));
+    assert_eq!(decode("\t가\n가\u{3000}가가"), Ok(vec![0, 0, 0, 0, 0]));
 
     // error: invalid
     assert!(decode("X").is_err());
