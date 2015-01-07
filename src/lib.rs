@@ -6,8 +6,6 @@
 
 //! An implementation of [BaseHangul](https://BaseHangul.github.io) in Rust.
 
-#![feature(associated_types)]
-
 extern crate "encoding-index-korean" as encoding_index;
 
 use std::{char, iter};
