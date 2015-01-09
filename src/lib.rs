@@ -6,6 +6,8 @@
 
 //! An implementation of [BaseHangul](https://BaseHangul.github.io) in Rust.
 
+#![allow(unstable)]
+
 extern crate "encoding-index-korean" as encoding_index;
 
 use std::{char, iter};
@@ -90,7 +92,7 @@ fn test_char_to_index_to_char() {
 pub struct Packer<Iter> {
     iter: iter::Fuse<Iter>,
     bits: u32, // anything >= 18 bits would work
-    nbits: uint,
+    nbits: usize,
 }
 
 impl<Iter: Iterator<Item=u8>> Packer<Iter> {
@@ -131,7 +133,7 @@ impl<Iter: Iterator<Item=u8>> Iterator for Packer<Iter> {
         }
     }
 
-    fn size_hint(&self) -> (uint, Option<uint>) {
+    fn size_hint(&self) -> (usize, Option<usize>) {
         // nchars = ceil(nbits / 10)
         let (lo, hi) = self.iter.size_hint();
         ((lo * 8 + 9) / 10, hi.map(|hi| (hi * 8 + 9) / 10))
@@ -187,7 +189,7 @@ impl<Iter: Iterator<Item=u8>> Encoder<Iter> {
 impl<Iter: Iterator<Item=u8>> Iterator for Encoder<Iter> {
     type Item = char;
     fn next(&mut self) -> Option<char> { self.packer.next().map(index_to_char) }
-    fn size_hint(&self) -> (uint, Option<uint>) { self.packer.size_hint() }
+    fn size_hint(&self) -> (usize, Option<usize>) { self.packer.size_hint() }
 }
 
 /// Converts a byte sequence into the BaseHangul string.
@@ -212,7 +214,7 @@ fn test_encode() {
 pub struct Unpacker<Iter> {
     iter: Iter,
     bits: u32,
-    nbits: uint,
+    nbits: usize,
     last: bool,
 }
 
@@ -253,9 +255,9 @@ impl<Iter: Iterator<Item=u16>> Iterator for Unpacker<Iter> {
                 Some(b @ 1024...2045) => {
                     static CL1: [u8; 32] = [0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
                                             1,1,1,1,1,1,1,1, 2,2,2,2,3,3,4,5];
-                    let mut nones = CL1[((b >> 5) & 0x1f) as uint] as uint;
+                    let mut nones = CL1[((b >> 5) & 0x1f) as usize] as usize;
                     if nones == 5 { // we may have more ones in the lower half
-                        nones += CL1[(b & 0x1f) as uint] as uint;
+                        nones += CL1[(b & 0x1f) as usize] as usize;
                     }
                     debug_assert!(nones < 10);
                     let nbits = 9 - nones;
@@ -276,7 +278,7 @@ impl<Iter: Iterator<Item=u16>> Iterator for Unpacker<Iter> {
         }
     }
 
-    fn size_hint(&self) -> (uint, Option<uint>) {
+    fn size_hint(&self) -> (usize, Option<usize>) {
         // nchars * 10 - 9 <= nbits <= nchars * 10
         let (lo, hi) = self.iter.size_hint();
         ((lo * 10 - 9 + 7) / 8, hi.map(|hi| (hi * 10 + 7) / 8))
@@ -381,7 +383,7 @@ impl<Iter: Iterator<Item=char>> Iterator for Decoder<Iter> {
     fn next(&mut self) -> Option<DecodeResult<u8>> {
         self.unpacker.next()
     }
-    fn size_hint(&self) -> (uint, Option<uint>) {
+    fn size_hint(&self) -> (usize, Option<usize>) {
         let (lo, hi) = self.unpacker.size_hint();
         (if lo > 0 {1} else {0}, hi) // error can occur anywhere
     }
