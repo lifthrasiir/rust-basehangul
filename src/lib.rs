@@ -7,7 +7,6 @@
 //! An implementation of [BaseHangul](https://BaseHangul.github.io) in Rust.
 
 #![feature(core)] // lib stability features as per RFC #507
-#![cfg_attr(test, feature(collections))] // ditto
 
 extern crate "encoding-index-korean" as encoding_index;
 
