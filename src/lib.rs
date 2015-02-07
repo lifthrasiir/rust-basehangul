@@ -364,7 +364,7 @@ fn test_unpack() {
 
 /// An iterator adapter that decodes the byte stream from the BaseHangul stream.
 pub struct Decoder<Iter: Iterator<Item=char>> {
-    unpacker: Unpacker<iter::Map<char, u16, Iter, fn(char) -> u16>>,
+    unpacker: Unpacker<iter::Map<Iter, fn(char) -> u16>>,
 }
 
 impl<Iter: Iterator<Item=char>> Decoder<Iter> {
