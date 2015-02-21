@@ -6,16 +6,13 @@
 
 //! An implementation of [BaseHangul](https://BaseHangul.github.io) in Rust.
 
-#![feature(core)] // lib stability features as per RFC #507
-
 extern crate "encoding-index-korean" as encoding_index;
 
 use std::{char, iter};
-use std::borrow::IntoCow;
-use std::string::CowString;
+use std::borrow::{Cow, IntoCow};
 
 /// The enum that contains either `T` or a decoding error.
-pub type DecodeResult<T> = Result<T, CowString<'static>>;
+pub type DecodeResult<T> = Result<T, Cow<'static, str>>;
 
 // --------------------&<--------------------
 // code to index and vice versa
@@ -74,7 +71,7 @@ fn test_char_to_index() {
 #[test]
 fn test_char_to_index_to_char() {
     let mut nextindex = 0;
-    for ch in range('가' as u32, '힣' as u32) {
+    for ch in ('가' as u32)..('힣' as u32) {
         let ch = char::from_u32(ch).unwrap();
         if let Some(index) = char_to_index(ch) {
             assert_eq!(index, nextindex);
