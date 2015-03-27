@@ -6,7 +6,9 @@
 
 //! An implementation of [BaseHangul](https://BaseHangul.github.io) in Rust.
 
-extern crate "encoding-index-korean" as encoding_index;
+#![feature(into_cow)] // lib stability features as per RFC #507
+
+extern crate encoding_index_korean;
 
 use std::{char, iter};
 use std::borrow::{Cow, IntoCow};
@@ -28,11 +30,11 @@ fn index_to_char(i: u16) -> char {
     let row = i / NCOLS + LEAD_OFFSET;
     let col = i % NCOLS + TRAIL_OFFSET;
     let code = row * STRIDE + col;
-    char::from_u32(encoding_index::euc_kr::forward(code) as u32).unwrap()
+    char::from_u32(encoding_index_korean::euc_kr::forward(code)).unwrap()
 }
 
 fn char_to_index(c: char) -> Option<u16> {
-    let code = encoding_index::euc_kr::backward(c as u32);
+    let code = encoding_index_korean::euc_kr::backward(c as u32);
     let row = code / STRIDE;
     let col = code % STRIDE;
     if row >= LEAD_OFFSET && col >= TRAIL_OFFSET {
@@ -370,7 +372,6 @@ impl<Iter: Iterator<Item=char>> Decoder<Iter> {
         fn char_to_index_or_so(c: char) -> u16 {
             char_to_index(c).unwrap_or(NCHARS /*out-of-bounds*/)
         }
-        let char_to_index_or_so = char_to_index_or_so as fn(char) -> u16;
         Decoder { unpacker: Unpacker::new(iter.map(char_to_index_or_so)) }
     }
 }
