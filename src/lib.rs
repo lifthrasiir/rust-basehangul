@@ -6,12 +6,10 @@
 
 //! An implementation of [BaseHangul](https://BaseHangul.github.io) in Rust.
 
-#![feature(into_cow)] // lib stability features as per RFC #507
-
 extern crate encoding_index_korean;
 
 use std::{char, iter};
-use std::borrow::{Cow, IntoCow};
+use std::borrow::Cow;
 
 /// The enum that contains either `T` or a decoding error.
 pub type DecodeResult<T> = Result<T, Cow<'static, str>>;
@@ -240,7 +238,7 @@ impl<Iter: Iterator<Item=u16>> Iterator for Unpacker<Iter> {
             if self.last {
                 if self.nbits > 0 {
                     self.nbits = 0;
-                    return Some(Err("non-integral number of bytes".into_cow()));
+                    return Some(Err("non-integral number of bytes".into()));
                 } else {
                     return None;
                 }
@@ -268,7 +266,7 @@ impl<Iter: Iterator<Item=u16>> Iterator for Unpacker<Iter> {
                 Some(_) => {
                     self.last = true;
                     self.nbits = 0;
-                    return Some(Err("invalid code word".into_cow()));
+                    return Some(Err("invalid code word".into()));
                 }
                 None => {
                     self.last = true;

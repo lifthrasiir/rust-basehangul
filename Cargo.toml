@@ -1,6 +1,6 @@
 [package]
 name = "basehangul"
-version = "0.1.10"
+version = "0.2.0"
 authors = ["Kang Seonghoon <public+rust@mearie.org>"]
 
 description = "An implementation of BaseHangul binary-to-text format in Rust"
